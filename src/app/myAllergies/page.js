@@ -189,58 +189,59 @@ function AllergyCard({ allergy, onDelete }) {
   );
 }
 
-// Add Allergy Modal Component (simplified: only Tree/Weed/Grass)
+// Add Allergy Modal Component
 function AddAllergyModal({ existingAllergies, onAdd, onClose }) {
   const [selectedAllergen, setSelectedAllergen] = useState("");
 
-  // Predefined allergen categories
-  const allergens = {
-    Tree: ["Oak", "Birch", "Cedar", "Pine", "Elm", "Maple", "Ash", "Poplar", "Willow"],
-    Weed: ["Ragweed", "Sagebrush", "Lamb's quarters", "Pigweed", "Plantain", "Dock"],
-    Grass: ["Bermuda Grass", "Timothy Grass", "Johnson Grass", "Ryegrass", "Kentucky Bluegrass", "Fescue"]
-  };
+  const allergens = [
+    { value: "Alder", label: "🌳 Alder", category: "Tree" },
+    { value: "Ash", label: "🌳 Ash", category: "Tree" },
+    { value: "Birch", label: "🌳 Birch", category: "Tree" },
+    { value: "Cottonwood", label: "🌳 Cottonwood", category: "Tree" },
+    { value: "Cypress_Pine", label: "🌳 Cypress Pine", category: "Tree" },
+    { value: "Elm", label: "🌳 Elm", category: "Tree" },
+    { value: "Hazel", label: "🌳 Hazel", category: "Tree" },
+    { value: "Japanese_Cedar", label: "🌳 Japanese Cedar", category: "Tree" },
+    { value: "Japanese_Cypress", label: "🌳 Japanese Cypress", category: "Tree" },
+    { value: "Juniper", label: "🌳 Juniper", category: "Tree" },
+    { value: "Maple", label: "🌳 Maple", category: "Tree" },
+    { value: "Oak", label: "🌳 Oak", category: "Tree" },
+    { value: "Olive", label: "🌳 Olive", category: "Tree" },
+    { value: "Pine", label: "🌳 Pine", category: "Tree" },
+    { value: "Graminales", label: "🌱 Grasses", category: "Grass" },
+    { value: "Mugwort", label: "🌿 Mugwort", category: "Weed" },
+    { value: "Ragweed", label: "🌿 Ragweed", category: "Weed" },
+  ];
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!selectedAllergen) return;
 
-    // Determine icon and category based on allergen
-    let icon = "🌳";
-    let category = "Tree Pollen";
+    const selected = allergens.find(a => a.value === selectedAllergen);
     
-    if (allergens.Weed.includes(selectedAllergen)) {
-      icon = "🌿";
-      category = "Weed Pollen";
-    }
-    if (allergens.Grass.includes(selectedAllergen)) {
-      icon = "🌱";
-      category = "Grass Pollen";
-    }
-
+    // Default to the category icon if a specific one isn't defined
+    const icon = selected.category === "Tree" ? "🌳" : selected.category === "Weed" ? "🌿" : "🌱";
+    
     const allergenData = {
-      name: selectedAllergen,
-      category: category,
-      icon
+      name: selected.value,
+      category: selected.category,
+      icon,
     };
 
     onAdd(allergenData);
-    
-    // Reset the form after adding
     setSelectedAllergen("");
   };
 
-  // Count how many times each allergen has been added
   const getAllergenCount = (allergenName) => {
-    return existingAllergies.filter(allergy => allergy.name === allergenName).length;
+    return existingAllergies.filter((allergy) => allergy.name === allergenName).length;
   };
 
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-lg">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">Add New Allergy</h2>
 
         <form onSubmit={handleSubmit}>
-          {/* Select Allergen */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Select Allergen
@@ -252,48 +253,23 @@ function AddAllergyModal({ existingAllergies, onAdd, onClose }) {
               required
             >
               <option value="">Choose an allergen...</option>
-              <optgroup label="🌳 Tree Pollens">
-                {allergens.Tree.map((tree) => {
-                  const count = getAllergenCount(tree);
-                  return (
-                    <option key={tree} value={tree}>
-                      {tree}{count > 0 ? ` (${count} added)` : ''}
-                    </option>
-                  );
-                })}
-              </optgroup>
-              <optgroup label="🌿 Weeds">
-                {allergens.Weed.map((weed) => {
-                  const count = getAllergenCount(weed);
-                  return (
-                    <option key={weed} value={weed}>
-                      {weed}{count > 0 ? ` (${count} added)` : ''}
-                    </option>
-                  );
-                })}
-              </optgroup>
-              <optgroup label="🌱 Grasses">
-                {allergens.Grass.map((grass) => {
-                  const count = getAllergenCount(grass);
-                  return (
-                    <option key={grass} value={grass}>
-                      {grass}{count > 0 ? ` (${count} added)` : ''}
-                    </option>
-                  );
-                })}
-              </optgroup>
+              {allergens.map((a) => {
+                const count = getAllergenCount(a.value);
+                return (
+                  <option key={a.value} value={a.value}>
+                    {a.label}
+                    {count > 0 ? ` (${count} added)` : ""}
+                  </option>
+                );
+              })}
             </select>
-            
-            {/* Show info about duplicates */}
             {selectedAllergen && getAllergenCount(selectedAllergen) > 0 && (
               <p className="text-sm text-amber-600 mt-2">
-                ℹ️ You already have {getAllergenCount(selectedAllergen)} instance(s) of {selectedAllergen}. 
-                You can add it again if needed.
+                ℹ️ You already have {getAllergenCount(selectedAllergen)} instance(s) of{" "}
+                {selectedAllergen}. You can add it again if needed.
               </p>
             )}
           </div>
-
-          {/* Buttons */}
           <div className="flex justify-end space-x-3">
             <button
               type="button"
@@ -310,15 +286,10 @@ function AddAllergyModal({ existingAllergies, onAdd, onClose }) {
             </button>
           </div>
         </form>
-        
-        {/* Help text */}
-        <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-          <p className="text-sm text-blue-700">
-            💡 <strong>Tip:</strong> You can add the same allergen multiple times if you want to track different 
-            varieties or seasonal variations.
-          </p>
-        </div>
       </div>
     </div>
   );
 }
+
+// You can keep the rest of your components and logic as they are.
+// Just make sure to use this new version of AddAllergyModal.

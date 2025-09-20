@@ -49,7 +49,7 @@ export default function Home() {
             >
               <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">📊</div>
               <h3 className="text-xl font-semibold text-gray-800 mb-2">View Dashboard</h3>
-              <p className="text-gray-600">Check your health overview and today's conditions</p>
+              <p className="text-gray-600">Check your health overview and Today&apos;s conditions</p>
             </a>
             
             <a 
