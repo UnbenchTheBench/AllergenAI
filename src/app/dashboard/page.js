@@ -1,6 +1,5 @@
 "use client";
 
-import AutoGeoLocation from "../../components/Geolocation"
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../../config/firebase";
@@ -474,7 +473,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-      <AutoGeoLocation></AutoGeoLocation>
     </div>
   );
 }
