@@ -1,5 +1,6 @@
 "use client";
 
+import AutoGeoLocation from "../../components/Geolocation"
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../../config/firebase";
@@ -7,7 +8,7 @@ import {
   collection, 
   getDocs, 
   query, 
-  where, 
+  where,
   orderBy,
   limit 
 } from "firebase/firestore";
@@ -183,7 +184,7 @@ export default function Dashboard() {
               </p>
             </div>
           </div>
-          <p className="text-gray-600">Here's your allergy and health overview for today.</p>
+          <p className="text-gray-600">Here is your allergy and health overview for today.</p>
         </div>
 
         {error && (
@@ -473,6 +474,7 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      <AutoGeoLocation></AutoGeoLocation>
     </div>
   );
 }
