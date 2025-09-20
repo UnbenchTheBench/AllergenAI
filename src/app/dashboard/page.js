@@ -162,9 +162,27 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto py-8 px-4">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Welcome back, {user.displayName || user.email}!
-          </h1>
+          <div className="flex justify-between items-start mb-2">
+            <h1 className="text-3xl font-bold text-gray-800">
+              Welcome back, {user.displayName || user.email}!
+            </h1>
+            <div className="text-right">
+              <p className="text-lg font-medium text-gray-700">
+                {new Date().toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </p>
+              <p className="text-sm text-gray-500">
+                {new Date().toLocaleTimeString('en-US', { 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })}
+              </p>
+            </div>
+          </div>
           <p className="text-gray-600">Here's your allergy and health overview for today.</p>
         </div>
 
@@ -181,7 +199,15 @@ export default function Dashboard() {
             {/* Current Weather */}
             {weather && (
               <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">Current Weather & Environment</h2>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold text-gray-800">Current Weather & Environment</h2>
+                  <p className="text-sm text-gray-500">
+                    Last updated: {new Date().toLocaleTimeString('en-US', { 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}
+                  </p>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Weather Info */}
                   <div className="space-y-4">
