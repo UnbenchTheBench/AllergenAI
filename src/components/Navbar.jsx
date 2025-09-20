@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import SignInWithGoogleButton from "./SignInWithGoogle";
 
 function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -110,6 +111,8 @@ function Navbar() {
                 >
                   Login
                 </button>
+
+                <SignInWithGoogleButton />
               </div>
             </form>
           </div>
