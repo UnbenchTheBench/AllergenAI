@@ -10,8 +10,7 @@ import {
   deleteDoc, 
   doc, 
   query, 
-  where, 
-  updateDoc 
+  where 
 } from "firebase/firestore";
 
 export default function MyAllergies() {
@@ -20,36 +19,6 @@ export default function MyAllergies() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  // Common allergens list
-  const commonAllergens = [
-    { name: "Pollen (Tree)", category: "Environmental", icon: "🌳" },
-    { name: "Pollen (Grass)", category: "Environmental", icon: "🌱" },
-    { name: "Pollen (Ragweed)", category: "Environmental", icon: "🌿" },
-    { name: "Dust Mites", category: "Environmental", icon: "🏠" },
-    { name: "Pet Dander (Cats)", category: "Environmental", icon: "🐱" },
-    { name: "Pet Dander (Dogs)", category: "Environmental", icon: "🐕" },
-    { name: "Mold", category: "Environmental", icon: "🍄" },
-    { name: "Peanuts", category: "Food", icon: "🥜" },
-    { name: "Tree Nuts", category: "Food", icon: "🌰" },
-    { name: "Shellfish", category: "Food", icon: "🦐" },
-    { name: "Fish", category: "Food", icon: "🐟" },
-    { name: "Eggs", category: "Food", icon: "🥚" },
-    { name: "Milk", category: "Food", icon: "🥛" },
-    { name: "Soy", category: "Food", icon: "🫘" },
-    { name: "Wheat", category: "Food", icon: "🌾" },
-    { name: "Penicillin", category: "Medication", icon: "💊" },
-    { name: "Aspirin", category: "Medication", icon: "💊" },
-    { name: "Latex", category: "Other", icon: "🧤" },
-    { name: "Insect Stings", category: "Other", icon: "🐝" }
-  ];
-
-  // Severity levels
-  const severityLevels = [
-    { value: "mild", label: "Mild", color: "bg-green-100 text-green-800" },
-    { value: "moderate", label: "Moderate", color: "bg-yellow-100 text-yellow-800" },
-    { value: "severe", label: "Severe", color: "bg-red-100 text-red-800" }
-  ];
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -109,23 +78,6 @@ export default function MyAllergies() {
     }
   };
 
-  const updateSeverity = async (allergyId, newSeverity) => {
-    try {
-      await updateDoc(doc(db, "allergies", allergyId), {
-        severity: newSeverity
-      });
-      
-      setAllergies(allergies.map(allergy => 
-        allergy.id === allergyId 
-          ? { ...allergy, severity: newSeverity }
-          : allergy
-      ));
-    } catch (error) {
-      console.error("Error updating severity:", error);
-      setError("Failed to update severity");
-    }
-  };
-
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -153,7 +105,7 @@ export default function MyAllergies() {
       <div className="max-w-6xl mx-auto py-8 px-4">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">My Allergies</h1>
-          <p className="text-gray-600">Manage your allergens and track their severity levels.</p>
+          <p className="text-gray-600">Manage your allergens (Tree, Weed, Grass).</p>
         </div>
 
         {error && (
@@ -163,22 +115,24 @@ export default function MyAllergies() {
         )}
 
         {/* Add Allergy Button */}
-        <div className="mb-6">
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
-          >
-            <span className="text-xl">+</span>
-            Add New Allergy
-          </button>
-        </div>
+        {allergies.length > 0 && (
+  <div className="mb-6">
+    <button
+      onClick={() => setShowAddModal(true)}
+      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
+    >
+      <span className="text-xl">+</span>
+      Add New Allergy
+    </button>
+  </div>
+)}
 
         {/* Allergies Grid */}
         {allergies.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg shadow">
             <div className="text-6xl mb-4">🤧</div>
             <h3 className="text-xl font-semibold text-gray-800 mb-2">No Allergies Added Yet</h3>
-            <p className="text-gray-600 mb-4">Start by adding your known allergens to track them better.</p>
+            <p className="text-gray-600 mb-4">Start by adding your allergens to track them.</p>
             <button
               onClick={() => setShowAddModal(true)}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
@@ -193,8 +147,6 @@ export default function MyAllergies() {
                 key={allergy.id}
                 allergy={allergy}
                 onDelete={deleteAllergy}
-                onUpdateSeverity={updateSeverity}
-                severityLevels={severityLevels}
               />
             ))}
           </div>
@@ -203,8 +155,6 @@ export default function MyAllergies() {
         {/* Add Allergy Modal */}
         {showAddModal && (
           <AddAllergyModal
-            commonAllergens={commonAllergens}
-            severityLevels={severityLevels}
             onAdd={addAllergy}
             onClose={() => setShowAddModal(false)}
           />
@@ -214,13 +164,8 @@ export default function MyAllergies() {
   );
 }
 
-// Allergy Card Component
-function AllergyCard({ allergy, onDelete, onUpdateSeverity, severityLevels }) {
-  const getSeverityStyle = (severity) => {
-    const level = severityLevels.find(s => s.value === severity);
-    return level ? level.color : "bg-gray-100 text-gray-800";
-  };
-
+// Allergy Card Component (no severity, no notes)
+function AllergyCard({ allergy, onDelete }) {
   return (
     <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
       <div className="flex justify-between items-start mb-4">
@@ -239,182 +184,75 @@ function AllergyCard({ allergy, onDelete, onUpdateSeverity, severityLevels }) {
           ✕
         </button>
       </div>
-
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Severity Level</label>
-        <select
-          value={allergy.severity}
-          onChange={(e) => onUpdateSeverity(allergy.id, e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          {severityLevels.map((level) => (
-            <option key={level.value} value={level.value}>
-              {level.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="flex justify-between items-center">
-        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getSeverityStyle(allergy.severity)}`}>
-          {severityLevels.find(s => s.value === allergy.severity)?.label}
-        </span>
-        {allergy.notes && (
-          <span className="text-sm text-gray-500" title={allergy.notes}>
-            📝
-          </span>
-        )}
-      </div>
-
-      {allergy.notes && (
-        <div className="mt-3 p-3 bg-gray-50 rounded-md">
-          <p className="text-sm text-gray-700">{allergy.notes}</p>
-        </div>
-      )}
     </div>
   );
 }
 
-// Add Allergy Modal Component
-function AddAllergyModal({ commonAllergens, severityLevels, onAdd, onClose }) {
+// Add Allergy Modal Component (simplified: only Tree/Weed/Grass)
+function AddAllergyModal({ onAdd, onClose }) {
   const [selectedAllergen, setSelectedAllergen] = useState("");
-  const [customName, setCustomName] = useState("");
-  const [severity, setSeverity] = useState("mild");
-  const [notes, setNotes] = useState("");
-  const [category, setCategory] = useState("Environmental");
-  const [isCustom, setIsCustom] = useState(false);
+
+  // Predefined allergen categories
+  const allergens = {
+    Tree: ["Oak", "Birch", "Cedar", "Pine", "Elm"],
+    Weed: ["Ragweed", "Sagebrush", "Lamb’s quarters", "Pigweed"],
+    Grass: ["Bermuda Grass", "Timothy Grass", "Johnson Grass", "Ryegrass"]
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    const allergenData = isCustom 
-      ? {
-          name: customName,
-          category: category,
-          icon: "🔸",
-          severity: severity,
-          notes: notes
-        }
-      : {
-          ...commonAllergens.find(a => a.name === selectedAllergen),
-          severity: severity,
-          notes: notes
-        };
+    if (!selectedAllergen) return;
+
+    let icon = "🌳";
+    if (allergens.Weed.includes(selectedAllergen)) icon = "🌿";
+    if (allergens.Grass.includes(selectedAllergen)) icon = "🌱";
+
+    const allergenData = {
+      name: selectedAllergen,
+      category: "Environmental",
+      icon
+    };
 
     onAdd(allergenData);
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
+  <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-lg">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">Add New Allergy</h2>
 
         <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <div className="flex gap-4 mb-4">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  checked={!isCustom}
-                  onChange={() => setIsCustom(false)}
-                  className="mr-2"
-                />
-                Choose from list
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  checked={isCustom}
-                  onChange={() => setIsCustom(true)}
-                  className="mr-2"
-                />
-                Add custom
-              </label>
-            </div>
-
-            {!isCustom ? (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Allergen
-                </label>
-                <select
-                  value={selectedAllergen}
-                  onChange={(e) => setSelectedAllergen(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                >
-                  <option value="">Choose an allergen...</option>
-                  {commonAllergens.map((allergen) => (
-                    <option key={allergen.name} value={allergen.name}>
-                      {allergen.icon} {allergen.name} ({allergen.category})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Allergen Name
-                  </label>
-                  <input
-                    type="text"
-                    value={customName}
-                    onChange={(e) => setCustomName(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter allergen name"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category
-                  </label>
-                  <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="Environmental">Environmental</option>
-                    <option value="Food">Food</option>
-                    <option value="Medication">Medication</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="mb-4">
+          {/* Select Allergen */}
+          <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Severity Level
+              Select Allergen
             </label>
             <select
-              value={severity}
-              onChange={(e) => setSeverity(e.target.value)}
+              value={selectedAllergen}
+              onChange={(e) => setSelectedAllergen(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
             >
-              {severityLevels.map((level) => (
-                <option key={level.value} value={level.value}>
-                  {level.label}
-                </option>
-              ))}
+              <option value="">Choose an allergen...</option>
+              <optgroup label="🌳 Tree Pollens">
+                {allergens.Tree.map((tree) => (
+                  <option key={tree} value={tree}>{tree}</option>
+                ))}
+              </optgroup>
+              <optgroup label="🌿 Weeds">
+                {allergens.Weed.map((weed) => (
+                  <option key={weed} value={weed}>{weed}</option>
+                ))}
+              </optgroup>
+              <optgroup label="🌱 Grasses">
+                {allergens.Grass.map((grass) => (
+                  <option key={grass} value={grass}>{grass}</option>
+                ))}
+              </optgroup>
             </select>
           </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Notes (Optional)
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows="3"
-              placeholder="Any additional notes about this allergy..."
-            />
-          </div>
-
+          {/* Buttons */}
           <div className="flex justify-end space-x-3">
             <button
               type="button"
