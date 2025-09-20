@@ -116,16 +116,16 @@ export default function MyAllergies() {
 
         {/* Add Allergy Button */}
         {allergies.length > 0 && (
-  <div className="mb-6">
-    <button
-      onClick={() => setShowAddModal(true)}
-      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
-    >
-      <span className="text-xl">+</span>
-      Add New Allergy
-    </button>
-  </div>
-)}
+          <div className="mb-6">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
+            >
+              <span className="text-xl">+</span>
+              Add New Allergy
+            </button>
+          </div>
+        )}
 
         {/* Allergies Grid */}
         {allergies.length === 0 ? (
@@ -155,6 +155,7 @@ export default function MyAllergies() {
         {/* Add Allergy Modal */}
         {showAddModal && (
           <AddAllergyModal
+            existingAllergies={allergies}
             onAdd={addAllergy}
             onClose={() => setShowAddModal(false)}
           />
@@ -189,36 +190,53 @@ function AllergyCard({ allergy, onDelete }) {
 }
 
 // Add Allergy Modal Component (simplified: only Tree/Weed/Grass)
-function AddAllergyModal({ onAdd, onClose }) {
+function AddAllergyModal({ existingAllergies, onAdd, onClose }) {
   const [selectedAllergen, setSelectedAllergen] = useState("");
 
   // Predefined allergen categories
   const allergens = {
-    Tree: ["Oak", "Birch", "Cedar", "Pine", "Elm"],
-    Weed: ["Ragweed", "Sagebrush", "Lamb’s quarters", "Pigweed"],
-    Grass: ["Bermuda Grass", "Timothy Grass", "Johnson Grass", "Ryegrass"]
+    Tree: ["Oak", "Birch", "Cedar", "Pine", "Elm", "Maple", "Ash", "Poplar", "Willow"],
+    Weed: ["Ragweed", "Sagebrush", "Lamb's quarters", "Pigweed", "Plantain", "Dock"],
+    Grass: ["Bermuda Grass", "Timothy Grass", "Johnson Grass", "Ryegrass", "Kentucky Bluegrass", "Fescue"]
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!selectedAllergen) return;
 
+    // Determine icon and category based on allergen
     let icon = "🌳";
-    if (allergens.Weed.includes(selectedAllergen)) icon = "🌿";
-    if (allergens.Grass.includes(selectedAllergen)) icon = "🌱";
+    let category = "Tree Pollen";
+    
+    if (allergens.Weed.includes(selectedAllergen)) {
+      icon = "🌿";
+      category = "Weed Pollen";
+    }
+    if (allergens.Grass.includes(selectedAllergen)) {
+      icon = "🌱";
+      category = "Grass Pollen";
+    }
 
     const allergenData = {
       name: selectedAllergen,
-      category: "Environmental",
+      category: category,
       icon
     };
 
     onAdd(allergenData);
+    
+    // Reset the form after adding
+    setSelectedAllergen("");
+  };
+
+  // Count how many times each allergen has been added
+  const getAllergenCount = (allergenName) => {
+    return existingAllergies.filter(allergy => allergy.name === allergenName).length;
   };
 
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
-  <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-lg">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-lg">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">Add New Allergy</h2>
 
         <form onSubmit={handleSubmit}>
@@ -235,21 +253,44 @@ function AddAllergyModal({ onAdd, onClose }) {
             >
               <option value="">Choose an allergen...</option>
               <optgroup label="🌳 Tree Pollens">
-                {allergens.Tree.map((tree) => (
-                  <option key={tree} value={tree}>{tree}</option>
-                ))}
+                {allergens.Tree.map((tree) => {
+                  const count = getAllergenCount(tree);
+                  return (
+                    <option key={tree} value={tree}>
+                      {tree}{count > 0 ? ` (${count} added)` : ''}
+                    </option>
+                  );
+                })}
               </optgroup>
               <optgroup label="🌿 Weeds">
-                {allergens.Weed.map((weed) => (
-                  <option key={weed} value={weed}>{weed}</option>
-                ))}
+                {allergens.Weed.map((weed) => {
+                  const count = getAllergenCount(weed);
+                  return (
+                    <option key={weed} value={weed}>
+                      {weed}{count > 0 ? ` (${count} added)` : ''}
+                    </option>
+                  );
+                })}
               </optgroup>
               <optgroup label="🌱 Grasses">
-                {allergens.Grass.map((grass) => (
-                  <option key={grass} value={grass}>{grass}</option>
-                ))}
+                {allergens.Grass.map((grass) => {
+                  const count = getAllergenCount(grass);
+                  return (
+                    <option key={grass} value={grass}>
+                      {grass}{count > 0 ? ` (${count} added)` : ''}
+                    </option>
+                  );
+                })}
               </optgroup>
             </select>
+            
+            {/* Show info about duplicates */}
+            {selectedAllergen && getAllergenCount(selectedAllergen) > 0 && (
+              <p className="text-sm text-amber-600 mt-2">
+                ℹ️ You already have {getAllergenCount(selectedAllergen)} instance(s) of {selectedAllergen}. 
+                You can add it again if needed.
+              </p>
+            )}
           </div>
 
           {/* Buttons */}
@@ -269,6 +310,14 @@ function AddAllergyModal({ onAdd, onClose }) {
             </button>
           </div>
         </form>
+        
+        {/* Help text */}
+        <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+          <p className="text-sm text-blue-700">
+            💡 <strong>Tip:</strong> You can add the same allergen multiple times if you want to track different 
+            varieties or seasonal variations.
+          </p>
+        </div>
       </div>
     </div>
   );

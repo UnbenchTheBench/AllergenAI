@@ -488,8 +488,8 @@ function AddSymptomModal({ commonSymptoms, allergies, severityLevels, onAdd, onC
   }, {});
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-white/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl border border-gray-200">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">Log New Symptoms</h2>
 
         <form onSubmit={handleSubmit}>
