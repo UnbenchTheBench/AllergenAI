@@ -20,6 +20,9 @@ function Navbar() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Default guest profile image (you can replace this with your own image URL)
+  const defaultProfileImage = "https://via.placeholder.com/150?text=Guest";
+
   // Listen for auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -29,7 +32,7 @@ function Navbar() {
           uid: user.uid,
           displayName: user.displayName,
           email: user.email,
-          photoURL: user.photoURL,
+          photoURL: user.photoURL || defaultProfileImage,
           emailVerified: user.emailVerified
         });
       } else {
@@ -88,9 +91,10 @@ function Navbar() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
-      // Update the user's display name
+      // Update the user's display name and set default profile picture
       await updateProfile(userCredential.user, {
-        displayName: fullName
+        displayName: fullName,
+        photoURL: defaultProfileImage // Set default image for email/password users
       });
 
       setShowSignUpModal(false);
@@ -105,7 +109,10 @@ function Navbar() {
 
   const handleGoogleSignIn = (userData) => {
     setIsLoggedIn(true);
-    setUser(userData);
+    setUser({
+      ...userData,
+      photoURL: userData.photoURL || defaultProfileImage // Fallback for Google users too
+    });
     setShowLoginModal(false);
     setShowSignUpModal(false);
     console.log("User data received in Navbar:", userData);
@@ -139,16 +146,16 @@ function Navbar() {
             </div>
             {isLoggedIn ? (
               <div className="hidden md:flex space-x-8">
-                <a href="#dashboard" className="hover:text-blue-200 transition-colors">
+                <a href="/dashboard" className="hover:text-blue-200 transition-colors">
                   Dashboard
                 </a>
-                <a href="#allergies" className="hover:text-blue-200 transition-colors">
+                <a href="/myAllergies" className="hover:text-blue-200 transition-colors">
                   My Allergies
                 </a>
-                <a href="#symptoms" className="hover:text-blue-200 transition-colors">
+                <a href="/symptomsLog" className="hover:text-blue-200 transition-colors">
                   Symptoms Log
                 </a>
-                <a href="#reports" className="hover:text-blue-200 transition-colors">
+                <a href="/reports" className="hover:text-blue-200 transition-colors">
                   Reports
                 </a>
               </div>
@@ -158,13 +165,16 @@ function Navbar() {
             <div className="flex items-center space-x-4">
               {isLoggedIn ? (
                 <div className="flex items-center space-x-4">
-                  {user?.photoURL && (
-                    <img 
-                      src={user.photoURL} 
-                      alt="Profile" 
-                      className="w-8 h-8 rounded-full"
-                    />
-                  )}
+                  {/* Always show profile image (either real or default) */}
+                  <img 
+                    src={user?.photoURL || defaultProfileImage} 
+                    alt="Profile" 
+                    className="w-8 h-8 rounded-full border-2 border-blue-300"
+                    onError={(e) => {
+                      // Fallback if image fails to load
+                      e.target.src = defaultProfileImage;
+                    }}
+                  />
                   <span className="text-sm">
                     Welcome, {user?.displayName || user?.email || "User"}!
                   </span>
@@ -395,14 +405,11 @@ function Navbar() {
   );
 }
 
-export default function Home() {
+
+export default function returnNavbar() {
   return (
     <div>
       <Navbar />
-      <div className="p-8">
-        <h1 className="text-3xl font-bold text-gray-800">Welcome to AllerTrack</h1>
-        <p className="text-gray-600 mt-4">Track and manage your allergies effectively.</p>
-      </div>
     </div>
   );
 }
