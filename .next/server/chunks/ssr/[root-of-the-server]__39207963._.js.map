@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 3, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"","debugId":null}},
-    {"offset": {"line": 11, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/dbenc/Downloads/miles-benchy/src/app/reports/page.js"],"sourcesContent":["\r\n\r\nexport default function reports() {\r\n  return (\r\n    <div>\r\n    </div>\r\n  );\r\n}"],"names":[],"mappings":";;;;;;AAEe,SAAS;IACtB,qBACE,8OAAC;;;;;AAGL","debugId":null}}]
-}
