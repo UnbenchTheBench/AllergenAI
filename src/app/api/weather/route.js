@@ -13,7 +13,7 @@ export async function GET(request) {
 
   try {
     const res = await fetch(
-      `https://api.weatherapi.com/v1/forecast.json?key=${process.env.WEATHER_API_KEY}&q=${lat},${lon}&days=${days}`
+      `https://api.weatherapi.com/v1/forecast.json?key=${process.env.WEATHER_API_KEY}&q=${lat},${lon}&days=5}`
     );
 
     if (!res.ok) {
