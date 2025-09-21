@@ -1,5 +1,5 @@
 // app/api/weather/route.js
-export async function GET(request) {
+export async function GET(request, days) {
   const { searchParams } = new URL(request.url);
   const lat = searchParams.get("lat");
   const lon = searchParams.get("lon");
@@ -13,7 +13,7 @@ export async function GET(request) {
 
   try {
     const res = await fetch(
-      `https://api.weatherapi.com/v1/forecast.json?key=${process.env.WEATHER_API_KEY}&q=${lat},${lon}&days=5`
+      `https://api.weatherapi.com/v1/forecast.json?key=${process.env.WEATHER_API_KEY}&q=${lat},${lon}&days=${days}`
     );
 
     if (!res.ok) {

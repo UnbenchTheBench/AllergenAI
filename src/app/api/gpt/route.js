@@ -32,6 +32,20 @@ Empathetic, supportive, and easy to understand.
 
 Encourage users with practical steps and reliable allergy resources.`
 
+async function getWeatherInfo(location) {
+
+  
+  const response = await fetch(endpoint);
+  
+  if (!response.ok) {
+      throw new Error(`Error fetching weather data: ${response.statusText}`);
+  }
+  const data = await response.json();
+
+  // Return the raw data instead of using myAgent (to avoid circular dependency)
+  return JSON.stringify(data);
+}
+
 
 const myAgent = new Agent({
   name: "Allergy Assistant",
