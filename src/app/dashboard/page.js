@@ -11,6 +11,7 @@ import {
   orderBy,
   limit 
 } from "firebase/firestore";
+import PollenInfo from "@/components/PollenInfo";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -192,9 +193,14 @@ export default function Dashboard() {
           </div>
         )}
 
+        
+
         {/* Main Grid */}
+
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Weather & Environment */}
+          
           <div className="lg:col-span-2 space-y-6">
             {/* Current Weather */}
             {weather && (
@@ -208,6 +214,7 @@ export default function Dashboard() {
                     })}
                   </p>
                 </div>
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Weather Info */}
                   <div className="space-y-4">
@@ -239,6 +246,9 @@ export default function Dashboard() {
                       </div>
                     </div>
                   </div>
+
+                  
+
 
                   {/* Pollen & Air Quality */}
                   <div className="space-y-4">
@@ -279,6 +289,9 @@ export default function Dashboard() {
                 </div>
               </div>
             )}
+
+            <PollenInfo/>
+
 
             {/* 5-Day Forecast */}
             {weather && (
