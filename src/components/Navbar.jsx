@@ -158,9 +158,9 @@ function Navbar() {
                 <a href="/reports" className="hover:text-blue-200 transition-colors">
                   Reports
                 </a>
-                <a href="/aiAgent" className="hover:text-blue-200 transition-colors">
+                {/* <a href="/aiAgent" className="hover:text-blue-200 transition-colors">
                   AI Agent
-                </a>
+                </a> */}
               </div>
             ) : null}
 
