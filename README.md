@@ -2,11 +2,12 @@
 
 AllergenAI is an AI-powered application that helps users identify, track, and manage allergens in their environment. By leveraging advanced machine learning and real-time data, AllergenAI provides personalized insights to help users minimize allergic reactions and maintain a healthier lifestyle.  
 
-![AllergenAI Screenshot](https://github.com/user-attachments/assets/6430b2c9-11ce-47d3-9b72-7d06eaf15a06)
-<br> <br> <br>
-<img width="1919" height="836" alt="{059D996A-B4AC-4FEC-A0DC-1D51A2158D30}" src="https://github.com/user-attachments/assets/c80feed4-0687-491a-b21e-d907e8375022" />
-<br> <br> <br>
-<img width="1915" height="810" alt="{A45DB381-A78A-4812-AA4E-0328709E205D}" src="https://github.com/user-attachments/assets/342f9f47-1038-4f2d-818e-a0f66e17d653" />
+<img width="1284" height="944" alt="{97EF3290-881F-4373-B938-32013B8BCAA1}" src="https://github.com/user-attachments/assets/e6071a37-4504-4722-a83b-228024f8d6c7" />
+<br>
+<img width="1292" height="670" alt="{AD206057-5E6D-46F4-9D9C-0BDE9D1F501D}" src="https://github.com/user-attachments/assets/da759ab6-5de8-4d12-9f2f-2e325813a19a" />
+<br>
+<img width="1256" height="695" alt="{A8BD4C23-807C-493C-9473-C0E787B9D2CE}" src="https://github.com/user-attachments/assets/21ee1d69-40d1-41cb-aed9-5beef58c0f39" />
+
 
 ---
 
