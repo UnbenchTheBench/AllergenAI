@@ -1,5 +1,5 @@
 "use client";
-
+import useGeolocation from "@/hooks/Geolocation";
 import { useEffect, useState } from "react";
 
 export default function PollenInfo() {
@@ -7,21 +7,25 @@ export default function PollenInfo() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+const { coords, error: geoError } = useGeolocation();
+
   useEffect(() => {
-    const fetchPollenData = async () => {
-      try {
-        const response = await fetch("/api/pollen");
-        if (!response.ok) throw new Error("Failed to fetch pollen data");
-        const data = await response.json();
-        setPollenData(data.data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPollenData();
-  }, []);
+  const fetchPollenData = async () => {
+    if (!coords.lat || !coords.lon) return;
+    try {
+      const response = await fetch(`/api/pollen?lat=${coords.lat}&lon=${coords.lon}`);
+      if (!response.ok) throw new Error("Failed to fetch pollen data");
+      const data = await response.json();
+      setPollenData(data.data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchPollenData();
+}, [coords]);
+
 
   const getPollenLevelClasses = (level) => {
     const colors = {

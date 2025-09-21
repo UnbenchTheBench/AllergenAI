@@ -1,9 +1,8 @@
+// app/api/weather/route.js
 export async function GET(request) {
-  const POLLEN_API_KEY = process.env.POLLEN_API_KEY; // automatically available
   const { searchParams } = new URL(request.url);
   const lat = searchParams.get("lat");
   const lon = searchParams.get("lon");
-
 
   if (!lat || !lon) {
     return new Response(JSON.stringify({ error: "Missing lat/lon" }), {
@@ -13,21 +12,15 @@ export async function GET(request) {
   }
 
   try {
-    const response = await fetch(
-      `https://api.ambeedata.com/latest/pollen/by-lat-lng?lat=${lat}&lng=${lon}`,
-      {
-        headers: {
-          "x-api-key": POLLEN_API_KEY,
-          "Content-Type": "application/json",
-        },
-      }
+    const res = await fetch(
+      `https://api.weatherapi.com/v1/forecast.json?key=${process.env.WEATHER_API_KEY}&q=${lat},${lon}&days=5`
     );
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+    if (!res.ok) {
+      throw new Error("Failed to fetch weather data");
     }
 
-    const data = await response.json();
+    const data = await res.json();
     return new Response(JSON.stringify(data), {
       status: 200,
       headers: { "Content-Type": "application/json" },

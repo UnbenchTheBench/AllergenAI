@@ -215,8 +215,6 @@ export default function Dashboard() {
                   {/* Weather Info */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      
-                      <div className="text-4xl">⛅</div>
                     </div>
                     
                     
@@ -235,24 +233,6 @@ export default function Dashboard() {
 
 
             {/* 5-Day Forecast */}
-            {weather && (
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">5-Day Forecast</h2>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  {weather.forecast.map((day, index) => (
-                    <div key={index} className="text-center p-3 rounded-lg bg-gray-50">
-                      <p className="text-sm font-medium text-gray-800">{day.day}</p>
-                      <div className="text-2xl my-2">{day.icon}</div>
-                      <p className="text-xs text-gray-600 mb-1">{day.condition}</p>
-                      <p className="text-sm">
-                        <span className="font-medium">{day.high}°</span>
-                        <span className="text-gray-500">/{day.low}°</span>
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             
 
