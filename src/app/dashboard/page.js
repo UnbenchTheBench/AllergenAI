@@ -36,6 +36,41 @@ export default function Dashboard() {
     return () => unsubscribe();
   }, []);
 
+  const fetchWeatherData = async () => {
+    try {
+      // Mock weather data - replace with real API call
+      const mockWeatherData = {
+        location: "Houston, TX",
+        temperature: 78,
+        condition: "Partly Cloudy",
+        humidity: 65,
+        windSpeed: 8,
+        uvIndex: 6,
+        pollenCount: {
+          tree: "High",
+          grass: "Medium",
+          weed: "Low"
+        },
+        airQuality: {
+          index: 42,
+          status: "Good"
+        },
+        forecast: [
+          { day: "Today", high: 78, low: 62, condition: "Partly Cloudy", icon: "⛅" },
+          { day: "Tomorrow", high: 82, low: 65, condition: "Sunny", icon: "☀️" },
+          { day: "Friday", high: 75, low: 58, condition: "Rainy", icon: "🌧️" },
+          { day: "Saturday", high: 73, low: 55, condition: "Cloudy", icon: "☁️" },
+          { day: "Sunday", high: 79, low: 63, condition: "Sunny", icon: "☀️" }
+        ]
+      };
+      
+      setWeather(mockWeatherData);
+    } catch (error) {
+      console.error("Error fetching weather:", error);
+    }
+  };
+
+
   const fetchUserData = async (userId) => {
     try {
       // Fetch user's allergies
