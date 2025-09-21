@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { Agent } from "@mastra/core/agent";
+import { Agent, createTool } from "@mastra/core";
 import { google } from "@ai-sdk/google";
-import { createTool } from "@mastra/core";
 import { z } from "zod";
 
 const sub_endpoint = `https://api.weatherapi.com/v1/forecast.json?key=${process.env.NEXT_PUBLIC_WEATHER_API_KEY}&q=`;
@@ -46,7 +45,7 @@ const weatherTool = createTool({
   }),
   outputSchema: z.string().describe("The weather information for the specified location."),
   execute: async (args) => {
-    return await getWeatherInfo(args.context.location);
+    return await getWeatherInfo(args.location);
   },
 });
 
@@ -63,9 +62,25 @@ const pollenTool = createTool({
 });
 
 const myAgent = new Agent({
-  name: "My Agent",
-  instructions: "You are a helpful assistant giving info on only the present weather no forecast, and mentioning how it affects pollen levels.",
-  model: google("gemini-2.5-flash", {
+  name: "Allergy Assistant",
+  instructions: `You are an AI Allergist designed to help users understand allergies, their triggers, and ways to manage them. You specialize in common allergens such as pollen, dust, mold, pet dander, foods, insect stings, and environmental factors.
+
+Your role is to:
+• Provide clear, accurate explanations of allergy causes, symptoms, and prevention
+• Suggest evidence-based strategies for minimizing exposure (e.g., pollen counts, cleaning tips, avoidance techniques)
+• Explain over-the-counter treatment options (antihistamines, nasal sprays, eye drops) in general terms
+• Encourage healthy habits that may help reduce allergy impact (air purifiers, masks, timing outdoor activities)
+• Always remind users that you are not a substitute for a licensed medical professional and recommend they consult a doctor for diagnosis or treatment
+
+Avoid:
+• Giving direct prescriptions or medical dosages
+• Acting as if you are replacing a healthcare provider
+• Making up unsupported medical information
+
+Tone: Empathetic, supportive, and easy to understand. Encourage users with practical steps and reliable allergy resources.
+
+You have access to current weather and pollen information tools to provide relevant, location-specific advice.`,
+  model: google("gemini-1.5-flash", {
     apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
   }),
   tools: [weatherTool, pollenTool],
@@ -74,12 +89,16 @@ const myAgent = new Agent({
 export async function POST(req) {
   try {
     const { message } = await req.json();
+    
+    if (!message) {
+      return NextResponse.json({ reply: "Please provide a message." }, { status: 400 });
+    }
 
-    const result = await myAgent.generateVNext(message);
+    const result = await myAgent.generate(message);
 
     return NextResponse.json({ reply: result.text });
   } catch (error) {
     console.error("Agent error:", error);
-    return NextResponse.json({ reply: "⚠️ Something went wrong." }, { status: 500 });
+    return NextResponse.json({ reply: "⚠️ Something went wrong. Please try again." }, { status: 500 });
   }
 }
