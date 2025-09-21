@@ -53,7 +53,6 @@ const myAgent = new Agent({
   model: google("gemini-1.5-flash", {
     apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
   }),
-  tools: [weatherTool, pollenTool]
 });
 
 export async function POST(request) {

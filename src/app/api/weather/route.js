@@ -1,5 +1,5 @@
 // app/api/weather/route.js
-export async function GET(request) {
+/*export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const lat = searchParams.get("lat");
   const lon = searchParams.get("lon");
@@ -31,4 +31,4 @@ export async function GET(request) {
       headers: { "Content-Type": "application/json" },
     });
   }
-}
+}*/
