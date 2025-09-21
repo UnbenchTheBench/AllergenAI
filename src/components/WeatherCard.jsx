@@ -42,7 +42,8 @@ export default function WeatherCard() {
   const forecast = weather.forecast.forecastday;
 
   return (
-    <div className="max-w-md mx-auto bg-white shadow-lg rounded-2xl p-4">
+    <>
+    <div className="">
       {/* Header */}
       <div className="border-b pb-2 mb-4">
         <h2 className="text-lg font-semibold">
@@ -50,7 +51,6 @@ export default function WeatherCard() {
         </h2>
         <p className="text-sm text-gray-500">{weather.location.localtime}</p>
       </div>
-
       {/* Current conditions */}
       <div className="flex items-center gap-4 mb-6">
         <img
@@ -68,26 +68,46 @@ export default function WeatherCard() {
       </div>
 
       {/* 5-day forecast */}
-      <div className="space-y-2">
-        {forecast.map((day) => (
-          <div
-            key={day.date}
-            className="flex items-center justify-between bg-gray-50 p-3 rounded-lg"
-          >
-            <span className="text-sm font-medium">{day.date}</span>
-            <div className="flex items-center gap-2">
-              <img
-                src={day.day.condition.icon}
-                alt={day.day.condition.text}
-                className="w-8 h-8"
-              />
-              <span className="text-sm">
-                {day.day.avgtemp_c}°C ({day.day.mintemp_c}° / {day.day.maxtemp_c}°)
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
+      
+
+
+        
+
+
     </div>
+
+    {forecast && (
+  <div className="">
+    <h2 className="text-xl font-semibold text-gray-800 mb-4">5-Day Forecast</h2>
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      {forecast.map((day) => (
+        <div key={day.date} className="text-center p-3 rounded-lg bg-gray-50">
+          {/* Display the date */}
+          <p className="text-sm font-medium text-gray-800">{day.date}</p>
+
+          {/* Weather icon */}
+          <div className="text-2xl my-2">
+            <img
+              src={day.day.condition.icon}
+              alt={day.day.condition.text}
+              className="w-10 h-10 mx-auto"
+            />
+          </div>
+
+          {/* Condition text */}
+          <p className="text-xs text-gray-600 mb-1">{day.day.condition.text}</p>
+
+          {/* Temperature info */}
+          <p className="text-sm">
+            <span className="font-medium">{day.day.maxtemp_c}°C</span>
+            <span className="text-gray-500">/{day.day.mintemp_c}°C</span>
+          </p>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+</>
   );
 }
