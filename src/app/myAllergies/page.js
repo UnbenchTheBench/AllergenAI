@@ -193,24 +193,23 @@ function AllergyCard({ allergy, onDelete }) {
 function AddAllergyModal({ existingAllergies, onAdd, onClose }) {
   const [selectedAllergen, setSelectedAllergen] = useState("");
 
-  const allergens = [
-    { value: "Alder", label: "🌳 Alder", category: "Tree" },
-    { value: "Ash", label: "🌳 Ash", category: "Tree" },
-    { value: "Birch", label: "🌳 Birch", category: "Tree" },
-    { value: "Cottonwood", label: "🌳 Cottonwood", category: "Tree" },
-    { value: "Cypress_Pine", label: "🌳 Cypress Pine", category: "Tree" },
-    { value: "Elm", label: "🌳 Elm", category: "Tree" },
-    { value: "Hazel", label: "🌳 Hazel", category: "Tree" },
-    { value: "Japanese_Cedar", label: "🌳 Japanese Cedar", category: "Tree" },
-    { value: "Japanese_Cypress", label: "🌳 Japanese Cypress", category: "Tree" },
-    { value: "Juniper", label: "🌳 Juniper", category: "Tree" },
-    { value: "Maple", label: "🌳 Maple", category: "Tree" },
-    { value: "Oak", label: "🌳 Oak", category: "Tree" },
-    { value: "Olive", label: "🌳 Olive", category: "Tree" },
-    { value: "Pine", label: "🌳 Pine", category: "Tree" },
-    { value: "Graminales", label: "🌱 Grasses", category: "Grass" },
-    { value: "Mugwort", label: "🌿 Mugwort", category: "Weed" },
-    { value: "Ragweed", label: "🌿 Ragweed", category: "Weed" },
+ const allergens = [
+  // Trees
+  { value: "Ash", label: "🌳 Ash", category: "Tree" },
+  { value: "Birch", label: "🌳 Birch", category: "Tree" },
+  { value: "Cypress/Juniper/Cedar", label: "🌳 Cypress / Juniper / Cedar", category: "Tree" },
+  { value: "Elm", label: "🌳 Elm", category: "Tree" },
+  { value: "Maple", label: "🌳 Maple", category: "Tree" },
+  { value: "Mulberry", label: "🌳 Mulberry", category: "Tree" },
+  { value: "Oak", label: "🌳 Oak", category: "Tree" },
+  { value: "Pine", label: "🌳 Pine", category: "Tree" },
+  { value: "Poplar/Cottonwood", label: "🌳 Poplar / Cottonwood", category: "Tree" },
+
+  // Grasses
+  { value: "Grass/Poaceae", label: "🌱 Grasses / Poaceae", category: "Grass" },
+
+  // Weeds
+  { value: "Ragweed", label: "🌿 Ragweed", category: "Weed" },
   ];
 
   const handleSubmit = (e) => {
