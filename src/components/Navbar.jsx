@@ -142,7 +142,7 @@ function Navbar() {
           <div className="flex justify-between items-center h-16">
             {/* Logo/Brand */}
             <div className="flex items-center">
-              <a href="/" className="text-xl font-bold">AllergySense</a>
+              <a href="/" className="text-xl font-bold">AllergenAI</a>
             </div>
             {isLoggedIn ? (
               <div className="hidden md:flex space-x-8">
