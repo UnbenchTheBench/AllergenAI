@@ -1,35 +1,25 @@
-export async function GET(request) {
-  const POLLEN_API_KEY = process.env.POLLEN_API_KEY;
-  const { searchParams } = new URL(request.url);
+import { useState, useEffect } from "react";
 
-  // Default values (Houston)
-  const lat = searchParams.get("lat") || 29.717872817349807;
-  const lon = searchParams.get("lon") || -95.40275915658768;
+export default function useGeolocation() {
+  const [coords, setCoords] = useState({ lat: null, lon: null });
+  const [error, setError] = useState(null);
 
-  try {
-    const response = await fetch(
-      `https://api.ambeedata.com/latest/pollen/by-lat-lng?lat=${lat}&lng=${lon}`,
-      {
-        headers: {
-          "x-api-key": POLLEN_API_KEY,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setError("Geolocation not supported");
+      return;
     }
 
-    const data = await response.json();
-    return new Response(JSON.stringify(data), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setCoords({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+        });
+      },
+      (err) => setError(err.message)
+    );
+  }, []);
+
+  return { coords, error };
 }

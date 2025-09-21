@@ -12,6 +12,7 @@ import {
   limit 
 } from "firebase/firestore";
 import PollenInfo from "@/components/PollenInfo";
+import WeatherCard from "@/components/WeatherCard";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -312,6 +313,9 @@ export default function Dashboard() {
                 </div>
               </div>
             )}
+
+            <WeatherCard></WeatherCard>
+
 
             {/* Recent Symptoms */}
             <div className="bg-white rounded-lg shadow p-6">
