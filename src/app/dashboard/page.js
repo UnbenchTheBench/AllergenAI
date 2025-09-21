@@ -197,96 +197,36 @@ export default function Dashboard() {
         
 
         {/* Main Grid */}
-
+        
+        
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Weather & Environment */}
           
           <div className="lg:col-span-2 space-y-6">
             {/* Current Weather */}
+                   
             {weather && (
               <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold text-gray-800">Current Weather & Environment</h2>
-                  <p className="text-sm text-gray-500">
-                    Last updated: {new Date().toLocaleTimeString('en-US', { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
-                  </p>
-                </div>
+                
+                <WeatherCard></WeatherCard>     
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Weather Info */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-800">{weather.location}</h3>
-                        <p className="text-3xl font-bold text-blue-600">{weather.temperature}°F</p>
-                        <p className="text-gray-600">{weather.condition}</p>
-                      </div>
+                      
                       <div className="text-4xl">⛅</div>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <span>💧</span>
-                        <span>Humidity: {weather.humidity}%</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span>🌪️</span>
-                        <span>Wind: {weather.windSpeed} mph</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span>☀️</span>
-                        <span>UV Index: {weather.uvIndex}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span>🌡️</span>
-                        <span>Air Quality: {weather.airQuality.index}</span>
-                      </div>
-                    </div>
+                    
                   </div>
 
                   
 
 
                   {/* Pollen & Air Quality */}
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-medium text-gray-800 mb-2">Pollen Levels</h4>
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">🌳 Tree</span>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getPollenLevel(weather.pollenCount.tree)}`}>
-                            {weather.pollenCount.tree}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">🌱 Grass</span>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getPollenLevel(weather.pollenCount.grass)}`}>
-                            {weather.pollenCount.grass}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">🌿 Weed</span>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getPollenLevel(weather.pollenCount.weed)}`}>
-                            {weather.pollenCount.weed}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
 
-                    <div>
-                      <h4 className="font-medium text-gray-800 mb-2">Air Quality</h4>
-                      <div className="flex items-center gap-2">
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getAirQualityColor(weather.airQuality.index)}`}>
-                          {weather.airQuality.status}
-                        </span>
-                        <span className="text-sm text-gray-600">AQI: {weather.airQuality.index}</span>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
@@ -314,7 +254,7 @@ export default function Dashboard() {
               </div>
             )}
 
-            <WeatherCard></WeatherCard>
+            
 
 
             {/* Recent Symptoms */}
