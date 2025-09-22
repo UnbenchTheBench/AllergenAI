@@ -51,7 +51,7 @@ const weatherTool = createTool({
 
 const pollenTool = createTool({
   id: "Get Pollen Information",
-  description: "Fetches pollen information for a specific location using Ambee API.",
+  description: "Fetches pollen information for a specific location",
   inputSchema: z.object({
     location: z.string().describe("Latitude and longitude of the location, comma-separated (lat,lon)"),
   }),
