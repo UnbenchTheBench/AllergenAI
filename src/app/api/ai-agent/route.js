@@ -94,7 +94,7 @@ export async function POST(req) {
       return NextResponse.json({ reply: "Please provide a message." }, { status: 400 });
     }
 
-    const result = await myAgent.generate(message);
+    const result = await myAgent.generateVNext(message);
 
     return NextResponse.json({ reply: result.text });
   } catch (error) {
