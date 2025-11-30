@@ -10,8 +10,8 @@ import {
   deleteDoc, 
   doc, 
   query, 
-  where, 
-  orderBy,
+  where,
+  limit,
   updateDoc 
 } from "firebase/firestore";
 

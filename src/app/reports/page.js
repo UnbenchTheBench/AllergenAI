@@ -41,45 +41,95 @@ export default function Reports() {
   }, []);
 
   const fetchUserData = async (userId) => {
+    // Helper to run getDocs with retry logic
+    const runGetDocsWithRetry = async (q, label, maxAttempts = 2) => {
+      let lastError;
+      const timeouts = [8000, 15000]; // First 8s, retry 15s
+      
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          const ms = timeouts[attempt];
+          console.time(`${label}.attempt${attempt + 1}`);
+          
+          const snapshot = await Promise.race([
+            getDocs(q),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error(`${label} query timeout`)), ms)
+            )
+          ]);
+          
+          console.timeEnd(`${label}.attempt${attempt + 1}`);
+          return snapshot;
+        } catch (err) {
+          lastError = err;
+          console.warn(`${label} attempt ${attempt + 1} failed:`, err.message);
+          if (attempt < maxAttempts - 1) {
+            console.log(`Retrying ${label}...`);
+          }
+        }
+      }
+      throw lastError;
+    };
+
     try {
-      // Fetch symptoms - with 8 second timeout
+      // Fetch symptoms with retry
       const symptomsQuery = query(
         collection(db, "symptoms"),
         where("userId", "==", userId),
         limit(100)
       );
-      const symptomsSnapshot = await Promise.race([
-        getDocs(symptomsQuery),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Symptoms query timeout")), 8000))
-      ]);
+      
+      let symptomsSnapshot;
+      try {
+        symptomsSnapshot = await runGetDocsWithRetry(symptomsQuery, 'Symptoms');
+      } catch (err) {
+        console.error("Symptoms query failed after retries:", err.message);
+        // Continue with empty symptoms instead of failing entire report
+        symptomsSnapshot = { docs: [] };
+      }
+
       const symptomsData = [];
-      symptomsSnapshot.forEach((doc) => {
-        const data = doc.data();
-        symptomsData.push({
-          id: doc.id,
-          ...data,
-          date: data.date?.toDate?.() || new Date(data.date)
+      if (symptomsSnapshot.forEach) {
+        symptomsSnapshot.forEach((doc) => {
+          const data = doc.data();
+          symptomsData.push({
+            id: doc.id,
+            ...data,
+            date: data.date?.toDate?.() || new Date(data.date)
+          });
         });
-      });
+      }
       // Sort on client side
       symptomsData.sort((a, b) => b.date - a.date);
       setSymptoms(symptomsData);
 
-      // Fetch allergies - with 8 second timeout
-      const allergiesQuery = query(collection(db, "allergies"), where("userId", "==", userId), limit(100));
-      const allergiesSnapshot = await Promise.race([
-        getDocs(allergiesQuery),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Allergies query timeout")), 8000))
-      ]);
+      // Fetch allergies with retry
+      const allergiesQuery = query(
+        collection(db, "allergies"),
+        where("userId", "==", userId),
+        limit(100)
+      );
+
+      let allergiesSnapshot;
+      try {
+        allergiesSnapshot = await runGetDocsWithRetry(allergiesQuery, 'Allergies');
+      } catch (err) {
+        console.error("Allergies query failed after retries:", err.message);
+        // Continue with empty allergies instead of failing entire report
+        allergiesSnapshot = { docs: [] };
+      }
+
       const allergiesData = [];
-      allergiesSnapshot.forEach((doc) => {
-        allergiesData.push({ id: doc.id, ...doc.data() });
-      });
+      if (allergiesSnapshot.forEach) {
+        allergiesSnapshot.forEach((doc) => {
+          allergiesData.push({ id: doc.id, ...doc.data() });
+        });
+      }
       setAllergies(allergiesData);
 
     } catch (error) {
-      console.error("Error fetching data:", error);
-      setError("Failed to load report data");
+      console.error("Error fetching report data:", error);
+      setError("Failed to load report data. Please try refreshing the page.");
     } finally {
       setLoading(false);
     }

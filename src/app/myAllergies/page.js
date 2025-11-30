@@ -21,6 +21,7 @@ export default function MyAllergies() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const authAbortRef = useRef(null);
 
   useEffect(() => {
     authAbortRef.current = new AbortController();
@@ -50,8 +51,6 @@ export default function MyAllergies() {
       unsubscribe();
     };
   }, []);
-
-  const authAbortRef = useRef(null);
 
   const fetchAllergies = async (userId) => {
     // Helper to run getDocs with a timeout

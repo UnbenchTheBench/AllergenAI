@@ -45,55 +45,92 @@ export default function Dashboard() {
   }, []);
 
   const fetchUserData = async (userId) => {
-    try {
-      // Create abort signal with 10 second timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
+    // Helper to run getDocs with retry logic
+    const runGetDocsWithRetry = async (q, label, maxAttempts = 2) => {
+      let lastError;
+      const timeouts = [8000, 15000]; // First 8s, retry 15s
+      
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          const ms = timeouts[attempt];
+          console.time(`${label}.attempt${attempt + 1}`);
+          
+          const snapshot = await Promise.race([
+            getDocs(q),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error(`${label} query timeout`)), ms)
+            )
+          ]);
+          
+          console.timeEnd(`${label}.attempt${attempt + 1}`);
+          return snapshot;
+        } catch (err) {
+          lastError = err;
+          console.warn(`${label} attempt ${attempt + 1} failed:`, err.message);
+          if (attempt < maxAttempts - 1) {
+            console.log(`Retrying ${label}...`);
+          }
+        }
+      }
+      throw lastError;
+    };
 
-      // Fetch user's allergies
+    try {
+      // Fetch user's allergies with retry
       const allergiesQuery = query(collection(db, "allergies"), where("userId", "==", userId), limit(50));
-      const allergiesSnapshot = await Promise.race([
-        getDocs(allergiesQuery),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Allergies query timeout")), 8000))
-      ]);
+      
+      let allergiesSnapshot;
+      try {
+        allergiesSnapshot = await runGetDocsWithRetry(allergiesQuery, 'Allergies');
+      } catch (err) {
+        console.error("Allergies query failed after retries:", err.message);
+        allergiesSnapshot = null;
+      }
+
       if (abortControllerRef.current.signal.aborted) return;
       
       const allergiesData = [];
-      allergiesSnapshot.forEach((doc) => {
-        allergiesData.push({ id: doc.id, ...doc.data() });
-      });
+      if (allergiesSnapshot && allergiesSnapshot.forEach) {
+        allergiesSnapshot.forEach((doc) => {
+          allergiesData.push({ id: doc.id, ...doc.data() });
+        });
+      }
       setAllergies(allergiesData);
 
-      // Fetch recent symptoms without orderBy to avoid index requirement
+      // Fetch recent symptoms with retry
       const symptomsQuery = query(
         collection(db, "symptoms"), 
         where("userId", "==", userId),
         limit(20)
       );
-      const symptomsSnapshot = await Promise.race([
-        getDocs(symptomsQuery),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Symptoms query timeout")), 8000))
-      ]);
+
+      let symptomsSnapshot;
+      try {
+        symptomsSnapshot = await runGetDocsWithRetry(symptomsQuery, 'Symptoms');
+      } catch (err) {
+        console.error("Symptoms query failed after retries:", err.message);
+        symptomsSnapshot = null;
+      }
+
       if (abortControllerRef.current.signal.aborted) return;
       
       const symptomsData = [];
-      symptomsSnapshot.forEach((doc) => {
-        const data = doc.data();
-        symptomsData.push({ 
-          id: doc.id, 
-          ...data,
-          date: data.date?.toDate?.() || new Date(data.date)
+      if (symptomsSnapshot && symptomsSnapshot.forEach) {
+        symptomsSnapshot.forEach((doc) => {
+          const data = doc.data();
+          symptomsData.push({ 
+            id: doc.id, 
+            ...data,
+            date: data.date?.toDate?.() || new Date(data.date)
+          });
         });
-      });
+      }
       
       // Sort on client side instead of Firestore
       symptomsData.sort((a, b) => b.date - a.date);
       setRecentSymptoms(symptomsData.slice(0, 10));
-      
-      clearTimeout(timeoutId);
 
     } catch (error) {
-      clearTimeout(timeoutId);
       if (error.name !== 'AbortError') {
         console.error("Error fetching user data:", error);
         setError("Failed to load some dashboard data");
