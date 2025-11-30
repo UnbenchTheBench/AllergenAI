@@ -15,6 +15,36 @@ import {
   updateDoc 
 } from "firebase/firestore";
 
+// Helper: run getDocs with timeout + retry (keeps UI responsive when backend is slow)
+const runGetDocsWithRetry = async (q, label, maxAttempts = 2) => {
+  let lastError;
+  // Shorten the first timeout so the UI feels snappier; still retry once with a longer window
+  const timeouts = [4000, 10000]; // First 4s, retry 10s
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      const ms = timeouts[attempt] || timeouts[timeouts.length - 1];
+      console.time(`${label}.attempt${attempt + 1}`);
+
+      const snapshot = await Promise.race([
+        getDocs(q),
+        new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} query timeout`)), ms))
+      ]);
+
+      console.timeEnd(`${label}.attempt${attempt + 1}`);
+      return snapshot;
+    } catch (err) {
+      lastError = err;
+      console.warn(`${label} attempt ${attempt + 1} failed:`, err.message);
+      if (attempt < maxAttempts - 1) console.log(`Retrying ${label}...`);
+    }
+  }
+
+  // Fail gracefully: instead of throwing (which can bubble up to the UI), return an empty-like snapshot
+  console.error(`${label} failed after ${maxAttempts} attempts:`, lastError && lastError.message);
+  return { docs: [], forEach: (fn) => {} };
+};
+
 export default function SymptomsLog() {
   const [user, setUser] = useState(null);
   const [symptoms, setSymptoms] = useState([]);
@@ -63,6 +93,23 @@ export default function SymptomsLog() {
       if (!isMounted) return;
       setUser(user);
       if (user) {
+        // Try to render cached data immediately for perceived performance
+        try {
+          const cachedSymptoms = sessionStorage.getItem(`symptoms_${user.uid}`);
+          if (cachedSymptoms) {
+            const parsed = JSON.parse(cachedSymptoms);
+            setSymptoms(parsed.map(s => ({ ...s, date: new Date(s.date) })));
+            setLoading(false);
+          }
+          const cachedAllergies = sessionStorage.getItem(`allergies_${user.uid}`);
+          if (cachedAllergies) {
+            setAllergies(JSON.parse(cachedAllergies));
+          }
+        } catch (e) {
+          console.warn('Error reading cache:', e);
+        }
+
+        // Fetch fresh data in background (will update UI when ready)
         fetchSymptoms(user.uid);
         fetchAllergies(user.uid);
       } else {
@@ -78,12 +125,8 @@ export default function SymptomsLog() {
 
   const fetchSymptoms = async (userId) => {
     try {
-      const q = query(
-        collection(db, "symptoms"), 
-        where("userId", "==", userId),
-        limit(100)
-      );
-      const querySnapshot = await getDocs(q);
+      const q = query(collection(db, "symptoms"), where("userId", "==", userId), limit(100));
+      const querySnapshot = await runGetDocsWithRetry(q, 'Symptoms');
       const symptomsData = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
@@ -96,6 +139,11 @@ export default function SymptomsLog() {
       // Sort on client side
       symptomsData.sort((a, b) => b.date - a.date);
       setSymptoms(symptomsData);
+      try {
+        sessionStorage.setItem(`symptoms_${userId}`, JSON.stringify(symptomsData.map(s => ({ ...s, date: s.date.toISOString() }))));
+      } catch (e) {
+        console.warn('Failed to write symptoms cache:', e);
+      }
     } catch (error) {
       console.error("Error fetching symptoms:", error);
       setError("Failed to load symptoms");
@@ -106,13 +154,18 @@ export default function SymptomsLog() {
 
   const fetchAllergies = async (userId) => {
     try {
-      const q = query(collection(db, "allergies"), where("userId", "==", userId));
-      const querySnapshot = await getDocs(q);
+      const q = query(collection(db, "allergies"), where("userId", "==", userId), limit(100));
+      const querySnapshot = await runGetDocsWithRetry(q, 'Allergies');
       const allergiesData = [];
       querySnapshot.forEach((doc) => {
         allergiesData.push({ id: doc.id, ...doc.data() });
       });
       setAllergies(allergiesData);
+      try {
+        sessionStorage.setItem(`allergies_${userId}`, JSON.stringify(allergiesData));
+      } catch (e) {
+        console.warn('Failed to write allergies cache:', e);
+      }
     } catch (error) {
       console.error("Error fetching allergies:", error);
     }

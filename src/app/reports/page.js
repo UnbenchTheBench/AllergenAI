@@ -71,6 +71,23 @@ export default function Reports() {
       throw lastError;
     };
 
+    // If we have cached report data, show it immediately while we fetch fresh data
+    try {
+      const cachedSymptoms = sessionStorage.getItem(`reports_symptoms_${userId}`);
+      if (cachedSymptoms) {
+        const parsed = JSON.parse(cachedSymptoms);
+        setSymptoms(parsed.map(s => ({ ...s, date: new Date(s.date) })));
+        setLoading(false);
+      }
+
+      const cachedAllergies = sessionStorage.getItem(`reports_allergies_${userId}`);
+      if (cachedAllergies) {
+        setAllergies(JSON.parse(cachedAllergies));
+      }
+    } catch (e) {
+      console.warn('Failed to read reports cache:', e);
+    }
+
     try {
       // Fetch symptoms with retry
       const symptomsQuery = query(
@@ -102,6 +119,11 @@ export default function Reports() {
       // Sort on client side
       symptomsData.sort((a, b) => b.date - a.date);
       setSymptoms(symptomsData);
+      try {
+        sessionStorage.setItem(`reports_symptoms_${userId}`, JSON.stringify(symptomsData.map(s => ({ ...s, date: s.date.toISOString() }))));
+      } catch (e) {
+        console.warn('Failed to write reports symptoms cache:', e);
+      }
 
       // Fetch allergies with retry
       const allergiesQuery = query(
@@ -126,6 +148,11 @@ export default function Reports() {
         });
       }
       setAllergies(allergiesData);
+      try {
+        sessionStorage.setItem(`reports_allergies_${userId}`, JSON.stringify(allergiesData));
+      } catch (e) {
+        console.warn('Failed to write reports allergies cache:', e);
+      }
 
     } catch (error) {
       console.error("Error fetching report data:", error);
