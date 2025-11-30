@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, Suspense, lazy } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../../config/firebase";
 import { 
@@ -8,91 +8,74 @@ import {
   getDocs, 
   query, 
   where,
-  orderBy,
   limit 
 } from "firebase/firestore";
-import PollenInfo from "@/components/PollenInfo";
-import WeatherCard from "@/components/WeatherCard";
+
+// Lazy load components to not block page load
+const PollenInfo = lazy(() => import("@/components/PollenInfo"));
+const WeatherCard = lazy(() => import("@/components/WeatherCard"));
+
+const LoadingPlaceholder = () => (
+  <div className="bg-gray-100 rounded-lg h-32 animate-pulse"></div>
+);
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [allergies, setAllergies] = useState([]);
   const [recentSymptoms, setRecentSymptoms] = useState([]);
-  const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const abortControllerRef = useRef(null);
 
   useEffect(() => {
+    abortControllerRef.current = new AbortController();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
-      if (user) {
+      if (user && !abortControllerRef.current.signal.aborted) {
         fetchUserData(user.uid);
-        fetchWeatherData();
-      } else {
+      } else if (!user) {
         setLoading(false);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      abortControllerRef.current.abort();
+      unsubscribe();
+    };
   }, []);
-
-  const fetchWeatherData = async () => {
-    try {
-      // Mock weather data - replace with real API call
-      const mockWeatherData = {
-        location: "Houston, TX",
-        temperature: 78,
-        condition: "Partly Cloudy",
-        humidity: 65,
-        windSpeed: 8,
-        uvIndex: 6,
-        pollenCount: {
-          tree: "High",
-          grass: "Medium",
-          weed: "Low"
-        },
-        airQuality: {
-          index: 42,
-          status: "Good"
-        },
-        forecast: [
-          { day: "Today", high: 78, low: 62, condition: "Partly Cloudy", icon: "⛅" },
-          { day: "Tomorrow", high: 82, low: 65, condition: "Sunny", icon: "☀️" },
-          { day: "Friday", high: 75, low: 58, condition: "Rainy", icon: "🌧️" },
-          { day: "Saturday", high: 73, low: 55, condition: "Cloudy", icon: "☁️" },
-          { day: "Sunday", high: 79, low: 63, condition: "Sunny", icon: "☀️" }
-        ]
-      };
-      
-      setWeather(mockWeatherData);
-    } catch (error) {
-      console.error("Error fetching weather:", error);
-    }
-  };
-
 
   const fetchUserData = async (userId) => {
     try {
+      // Create abort signal with 10 second timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
       // Fetch user's allergies
-      const allergiesQuery = query(collection(db, "allergies"), where("userId", "==", userId));
-      const allergiesSnapshot = await getDocs(allergiesQuery);
+      const allergiesQuery = query(collection(db, "allergies"), where("userId", "==", userId), limit(50));
+      const allergiesSnapshot = await Promise.race([
+        getDocs(allergiesQuery),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Allergies query timeout")), 8000))
+      ]);
+      if (abortControllerRef.current.signal.aborted) return;
+      
       const allergiesData = [];
       allergiesSnapshot.forEach((doc) => {
         allergiesData.push({ id: doc.id, ...doc.data() });
       });
       setAllergies(allergiesData);
 
-      // Fetch recent symptoms (last 7 days)
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
+      // Fetch recent symptoms without orderBy to avoid index requirement
       const symptomsQuery = query(
         collection(db, "symptoms"), 
         where("userId", "==", userId),
-        orderBy("date", "desc"),
-        limit(10)
+        limit(20)
       );
-      const symptomsSnapshot = await getDocs(symptomsQuery);
+      const symptomsSnapshot = await Promise.race([
+        getDocs(symptomsQuery),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Symptoms query timeout")), 8000))
+      ]);
+      if (abortControllerRef.current.signal.aborted) return;
+      
       const symptomsData = [];
       symptomsSnapshot.forEach((doc) => {
         const data = doc.data();
@@ -102,13 +85,23 @@ export default function Dashboard() {
           date: data.date?.toDate?.() || new Date(data.date)
         });
       });
-      setRecentSymptoms(symptomsData);
+      
+      // Sort on client side instead of Firestore
+      symptomsData.sort((a, b) => b.date - a.date);
+      setRecentSymptoms(symptomsData.slice(0, 10));
+      
+      clearTimeout(timeoutId);
 
     } catch (error) {
-      console.error("Error fetching user data:", error);
-      setError("Failed to load dashboard data");
+      clearTimeout(timeoutId);
+      if (error.name !== 'AbortError') {
+        console.error("Error fetching user data:", error);
+        setError("Failed to load some dashboard data");
+      }
     } finally {
-      setLoading(false);
+      if (!abortControllerRef.current.signal.aborted) {
+        setLoading(false);
+      }
     }
   };
 
@@ -145,17 +138,6 @@ export default function Dashboard() {
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Please Log In</h2>
           <p className="text-gray-600">You need to be logged in to view your dashboard.</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your dashboard...</p>
         </div>
       </div>
     );
@@ -208,38 +190,16 @@ export default function Dashboard() {
           {/* Left Column - Weather & Environment */}
           
           <div className="lg:col-span-2 space-y-6">
-            {/* Current Weather */}
-                   
-            {weather && (
+            {/* Weather & Pollen - Lazy loaded */}
+            <Suspense fallback={<LoadingPlaceholder />}>
               <div className="bg-white rounded-lg shadow p-6">
-                
-                <WeatherCard></WeatherCard>     
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Weather Info */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                    </div>
-                    
-                    
-                  </div>
-
-                  
-
-
-                  {/* Pollen & Air Quality */}
-
-                </div>
+                <WeatherCard />
               </div>
-            )}
+            </Suspense>
 
-            <PollenInfo/>
-
-
-            {/* 5-Day Forecast */}
-
-            
-
+            <Suspense fallback={<LoadingPlaceholder />}>
+              <PollenInfo />
+            </Suspense>
 
             {/* Recent Symptoms */}
             <div className="bg-white rounded-lg shadow p-6">

@@ -8,7 +8,6 @@ import {
   getDocs,
   query,
   where,
-  orderBy,
   limit
 } from "firebase/firestore";
 import { generatePDFReport } from "../../utils/pdfGenerator";
@@ -24,7 +23,9 @@ export default function Reports() {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!isMounted) return;
       setUser(user);
       if (user) {
         fetchUserData(user.uid);
@@ -33,19 +34,24 @@ export default function Reports() {
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const fetchUserData = async (userId) => {
     try {
-      // Fetch symptoms
+      // Fetch symptoms - with 8 second timeout
       const symptomsQuery = query(
         collection(db, "symptoms"),
         where("userId", "==", userId),
-        orderBy("date", "desc"),
         limit(100)
       );
-      const symptomsSnapshot = await getDocs(symptomsQuery);
+      const symptomsSnapshot = await Promise.race([
+        getDocs(symptomsQuery),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Symptoms query timeout")), 8000))
+      ]);
       const symptomsData = [];
       symptomsSnapshot.forEach((doc) => {
         const data = doc.data();
@@ -55,11 +61,16 @@ export default function Reports() {
           date: data.date?.toDate?.() || new Date(data.date)
         });
       });
+      // Sort on client side
+      symptomsData.sort((a, b) => b.date - a.date);
       setSymptoms(symptomsData);
 
-      // Fetch allergies
-      const allergiesQuery = query(collection(db, "allergies"), where("userId", "==", userId));
-      const allergiesSnapshot = await getDocs(allergiesQuery);
+      // Fetch allergies - with 8 second timeout
+      const allergiesQuery = query(collection(db, "allergies"), where("userId", "==", userId), limit(100));
+      const allergiesSnapshot = await Promise.race([
+        getDocs(allergiesQuery),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Allergies query timeout")), 8000))
+      ]);
       const allergiesData = [];
       allergiesSnapshot.forEach((doc) => {
         allergiesData.push({ id: doc.id, ...doc.data() });

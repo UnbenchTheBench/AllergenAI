@@ -4,19 +4,32 @@ import { useState, useEffect } from "react";
 import useGeolocation from "@/hooks/Geolocation";
 
 export default function WeatherCard() {
-  const { coords, error: geoError } = useGeolocation();
+  const { coords, error: geoError, loading: geoLoading } = useGeolocation();
   const [weather, setWeather] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchWeather() {
-      if (!coords.lat || !coords.lon) return;
+      // Only fetch if geolocation is done and we have coords
+      if (geoLoading) return;
+      
+      if (!coords.lat || !coords.lon) {
+        setLoading(false);
+        return;
+      }
 
       try {
-        setLoading(true);
+        const apiKey = process.env.NEXT_PUBLIC_WEATHER_API_KEY;
+        if (!apiKey) {
+          setError("Weather API key not configured");
+          setLoading(false);
+          return;
+        }
+
         const res = await fetch(
-          `https://api.weatherapi.com/v1/forecast.json?key=${process.env.NEXT_PUBLIC_WEATHER_API_KEY}&q=${coords.lat},${coords.lon}&days=5`
+          `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${coords.lat},${coords.lon}&days=5`,
+          { signal: AbortSignal.timeout(8000) } // 8 second timeout
         );
 
         if (!res.ok) throw new Error("Failed to fetch weather data");
@@ -24,18 +37,29 @@ export default function WeatherCard() {
         const data = await res.json();
         setWeather(data);
       } catch (err) {
-        setError(err.message);
+        if (err.name !== 'AbortError') {
+          setError(err.message);
+        }
       } finally {
         setLoading(false);
       }
     }
 
     fetchWeather();
-  }, [coords.lat, coords.lon]);
+  }, [coords.lat, coords.lon, geoLoading]);
 
-  if (geoError) return <p className="text-red-500">Geolocation error: {geoError}</p>;
-  if (loading) return <p>Loading weather...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
+  if (loading) return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <p className="text-gray-500 text-center">Loading weather...</p>
+    </div>
+  );
+  
+  if (geoError || error) return (
+    <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded">
+      <p className="text-sm">Weather data unavailable. {geoError || error}</p>
+    </div>
+  );
+  
   if (!weather) return null;
 
   const current = weather.current;
@@ -69,9 +93,6 @@ export default function WeatherCard() {
 
       {/* 5-day forecast */}
       
-
-
-        
 
 
     </div>

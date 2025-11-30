@@ -58,7 +58,9 @@ export default function SymptomsLog() {
   ];
 
   useEffect(() => {
+    let isMounted = true;
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!isMounted) return;
       setUser(user);
       if (user) {
         fetchSymptoms(user.uid);
@@ -68,7 +70,10 @@ export default function SymptomsLog() {
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const fetchSymptoms = async (userId) => {
@@ -76,7 +81,7 @@ export default function SymptomsLog() {
       const q = query(
         collection(db, "symptoms"), 
         where("userId", "==", userId),
-        orderBy("date", "desc")
+        limit(100)
       );
       const querySnapshot = await getDocs(q);
       const symptomsData = [];
@@ -88,6 +93,8 @@ export default function SymptomsLog() {
           date: data.date?.toDate?.() || new Date(data.date)
         });
       });
+      // Sort on client side
+      symptomsData.sort((a, b) => b.date - a.date);
       setSymptoms(symptomsData);
     } catch (error) {
       console.error("Error fetching symptoms:", error);

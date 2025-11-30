@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../../config/firebase";
 import { 
@@ -10,8 +10,10 @@ import {
   deleteDoc, 
   doc, 
   query, 
-  where 
+  where,
+  limit 
 } from "firebase/firestore";
+
 
 export default function MyAllergies() {
   const [user, setUser] = useState(null);
@@ -21,30 +23,98 @@ export default function MyAllergies() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    authAbortRef.current = new AbortController();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (authAbortRef.current.signal.aborted) return;
       setUser(user);
       if (user) {
+        // Try to load cached allergies immediately
+        try {
+          const cached = sessionStorage.getItem(`allergies_${user.uid}`);
+          if (cached) {
+            setAllergies(JSON.parse(cached));
+            setLoading(false); // show cached immediately
+          }
+        } catch (e) {
+          console.warn('Failed to read allergies cache', e);
+        }
+        // Fetch fresh data in background
         fetchAllergies(user.uid);
       } else {
         setLoading(false);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      authAbortRef.current.abort();
+      unsubscribe();
+    };
   }, []);
 
+  const authAbortRef = useRef(null);
+
   const fetchAllergies = async (userId) => {
+    // Helper to run getDocs with a timeout
+    const runGetDocsWithTimeout = async (q, ms, label) => {
+      let tId;
+      try {
+        console.time(label);
+        const docsPromise = (async () => {
+          const res = await getDocs(q);
+          console.timeEnd(label);
+          return res;
+        })();
+
+        const timeoutPromise = new Promise((_, reject) => {
+          tId = setTimeout(() => reject(new Error("Allergies query timeout")), ms);
+        });
+
+        const snapshot = await Promise.race([docsPromise, timeoutPromise]);
+        return snapshot;
+      } finally {
+        clearTimeout(tId);
+      }
+    };
+
     try {
-      const q = query(collection(db, "allergies"), where("userId", "==", userId));
-      const querySnapshot = await getDocs(q);
+      const q = query(collection(db, "allergies"), where("userId", "==", userId), limit(100));
+
+      // First attempt: short timeout
+      let querySnapshot;
+      try {
+        querySnapshot = await runGetDocsWithTimeout(q, 8000, 'fetchAllergies.getDocs');
+      } catch (err) {
+        console.warn('Allergies query timed out on first attempt:', err.message);
+        // Retry once with a longer timeout
+        try {
+          querySnapshot = await runGetDocsWithTimeout(q, 15000, 'fetchAllergies.getDocs.retry');
+        } catch (err2) {
+          console.error('Allergies query timed out on retry:', err2.message);
+          throw err2; // bubble up
+        }
+      }
+
+      if (authAbortRef.current?.signal?.aborted) return;
+
       const allergiesData = [];
       querySnapshot.forEach((doc) => {
         allergiesData.push({ id: doc.id, ...doc.data() });
       });
       setAllergies(allergiesData);
+      // cache results for faster subsequent loads during session
+      try {
+        if (userId) sessionStorage.setItem(`allergies_${userId}`, JSON.stringify(allergiesData));
+      } catch (e) {
+        console.warn('Failed to write allergies cache', e);
+      }
     } catch (error) {
       console.error("Error fetching allergies:", error);
-      setError("Failed to load allergies");
+      // Provide more detailed UI message for timeouts vs other errors
+      if (error && error.message && error.message.toLowerCase().includes('timeout')) {
+        setError('Allergies request timed out. Showing cached data if available.');
+      } else {
+        setError('Failed to load allergies');
+      }
     } finally {
       setLoading(false);
     }

@@ -7,24 +7,39 @@ export default function PollenInfo() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-const { coords, error: geoError } = useGeolocation();
+  const { coords, error: geoError, loading: geoLoading } = useGeolocation();
 
   useEffect(() => {
-  const fetchPollenData = async () => {
-    if (!coords.lat || !coords.lon) return;
-    try {
-      const response = await fetch(`/api/pollen?lat=${coords.lat}&lon=${coords.lon}`);
-      if (!response.ok) throw new Error("Failed to fetch pollen data");
-      const data = await response.json();
-      setPollenData(data.data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+    const fetchPollenData = async () => {
+      // Only attempt if we have coords and geolocation isn't timing out
+      if (!coords.lat || !coords.lon) {
+        if (!geoLoading && geoError) {
+          setLoading(false);
+        }
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/pollen?lat=${coords.lat}&lon=${coords.lon}`, {
+          signal: AbortSignal.timeout(8000) // 8 second timeout
+        });
+        if (!response.ok) throw new Error("Failed to fetch pollen data");
+        const data = await response.json();
+        setPollenData(data.data);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          setError(err.message);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Fetch pollen only after geolocation completes
+    if (!geoLoading) {
+      fetchPollenData();
     }
-  };
-  fetchPollenData();
-}, [coords]);
+  }, [coords, geoLoading]);
 
 
   const getPollenLevelClasses = (level) => {
@@ -44,9 +59,9 @@ const { coords, error: geoError } = useGeolocation();
     </div>
   );
 
-  if (error) return (
-    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-      {error}
+  if (error || geoError) return (
+    <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded mb-6">
+      <p>Pollen data unavailable. {error || geoError}</p>
     </div>
   );
 
