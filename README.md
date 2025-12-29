@@ -8,6 +8,9 @@ AllergenAI is an AI-powered application that helps users identify, track, and ma
 <br>
 <img width="1256" height="695" alt="{A8BD4C23-807C-493C-9473-C0E787B9D2CE}" src="https://github.com/user-attachments/assets/21ee1d69-40d1-41cb-aed9-5beef58c0f39" />
 
+
+---
+
 ## Features
 
 - **Real-time allergen detection:** Get up-to-date information about pollen, dust, and other allergens in your area.  
